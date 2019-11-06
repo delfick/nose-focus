@@ -175,10 +175,7 @@ class Plugin(Plugin):
         if self.just_ignore:
             return
 
-        if inspect.getmodule(thing) is self.current_module and self.lineage.focused(thing):
-            return True
-        else:
-            return False
+        return self.lineage.focused(thing)
 
     wantMethod = wantThing
     wantFunction = wantThing
