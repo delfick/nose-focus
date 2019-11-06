@@ -5,7 +5,6 @@ from nose_focus.plugin import Lineage
 from unittest import TestCase
 import noseOfYeti
 import nose
-import six
 
 from tests import examples
 import tests

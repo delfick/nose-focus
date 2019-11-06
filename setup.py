@@ -6,9 +6,7 @@ setup(
     , packages = find_packages(include='nose_focus.*', exclude=["tests*"])
     , include_package_data = True
 
-    , install_requires =
-      [ 'six'
-      ]
+    , python_requires = ">= 3.5"
 
     , extras_require =
       { "tests":

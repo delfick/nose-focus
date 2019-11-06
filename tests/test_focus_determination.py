@@ -20,7 +20,6 @@ from tests.examples.test_examples.test_module import test_with_ignored_things as
 from tests.examples.test_examples.test_module import test_non_focus_module as nonfocusedd_things
 
 import types
-import six
 
 some_ignored_things = [
       implicitly_ignored_module, implicitly_ignored_module_stuff
@@ -43,26 +42,14 @@ def ignored_things_with_attribute(**kwargs):
         current_vals = dict((key, getattr(thing, key, Empty)) for key in kwargs)
         try:
             for key, val in kwargs.items():
-                if six.PY2:
-                    if type(thing) is types.UnboundMethodType:
-                        setattr(thing.im_func, key, val)
-                    else:
-                        setattr(thing, key, val)
-                else:
-                    setattr(thing, key, val)
+                setattr(thing, key, val)
             yield thing
         except AttributeError as err:
             raise Exception("Couldn't set {0} on {1} to {2} because {3}".format(key, thing, val, err))
         finally:
             for key, val in current_vals.items():
                 if val is Empty:
-                    if six.PY2:
-                        if type(thing) is types.UnboundMethodType:
-                            delattr(thing.im_func, key)
-                        else:
-                            delattr(thing, key)
-                    else:
-                        delattr(thing, key)
+                    delattr(thing, key)
                 else:
                     setattr(thing, key, val)
 

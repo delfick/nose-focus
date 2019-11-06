@@ -1,14 +1,13 @@
 from nose.selector import Selector
 from nose.plugins import Plugin
-from six.moves import builtins
 from fnmatch import fnmatch
+import builtins
 import optparse
 import logging
 import inspect
 import types
 import nose
 import sys
-import six
 import os
 
 class Lineage(object):
@@ -25,8 +24,6 @@ class Lineage(object):
         Memoize the results for each method and class as we go along
         """
         unbound_method_type = types.MethodType
-        if six.PY2:
-            unbound_method_type = types.UnboundMethodType
 
         if repr(thing) not in self.lineage:
             lineage = []
@@ -69,7 +66,7 @@ class Lineage(object):
                         add(parent)
                 else:
                     module = getattr(thing, "__module__", None)
-                    if isinstance(module, six.string_types):
+                    if isinstance(module, str):
                         module = sys.modules.get(module)
 
                     if module and module is not builtins:
@@ -138,9 +135,9 @@ class Lineage(object):
                     if lineage:
                         parent, lineage = lineage[0], lineage[1:]
 
-                    is_class = isinstance(thing, six.class_types)
+                    is_class = isinstance(thing, type)
                     is_not_class = not is_class
-                    parent_is_not_class = not parent or not isinstance(parent, six.class_types)
+                    parent_is_not_class = not parent or not isinstance(parent, type)
                     if getattr(thing, "nose_focus", None) or (((is_class and parent_is_not_class) or is_not_class) and parent and self.focused(parent)):
                         focused = True
             self._focused[thing] = focused
