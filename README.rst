@@ -7,6 +7,16 @@ run the tests that you are focusing on right now.
 .. image:: https://travis-ci.org/delfick/nose-focus.png?branch=master
     :target: https://travis-ci.org/delfick/nose-focus
 
+Changelog
+---------
+
+0.1.4
+   * When you focus a class, tests using that class outside that module will also
+     be focused
+
+before 0.1.4
+   * Changelog not kept
+
 Usage
 -----
 
