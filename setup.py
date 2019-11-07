@@ -1,6 +1,8 @@
 from setuptools import setup, find_packages
 from nose_focus import VERSION
 
+# fmt:off
+
 setup(
       name = "nose_focus"
     , version = VERSION
@@ -31,3 +33,5 @@ setup(
     , license = "MIT"
     , keywords = "nose tests focus"
     )
+
+# fmt:on

@@ -1,7 +1,8 @@
 *.pyc
-*~
-.ropeproject/
+__pycache__/
 *.egg-info/
-dist/
 .tox/
+pip-wheel-metadata/
+build/
+dist/
 docs/_build/
