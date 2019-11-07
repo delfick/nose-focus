@@ -2,9 +2,6 @@
 
 from nose_focus.plugin import Lineage
 
-from noseOfYeti.tokeniser.support import noy_sup_setUp
-from unittest import TestCase
-
 from tests.examples.test_examples.test_ignored_module.test_implicitly_ignored_module import (
     test_stuff as implicitly_ignored_module_stuff,
 )
@@ -23,6 +20,7 @@ from tests.examples.test_examples.test_module import test_focus_module as focus_
 from tests.examples.test_examples.test_module import test_with_ignored_things as ignored_things
 from tests.examples.test_examples.test_module import test_non_focus_module as nonfocusedd_things
 
+import pytest
 import types
 
 some_ignored_things = [
@@ -40,6 +38,11 @@ some_ignored_things = [
     ignored_things.IgnoredClassChild,
     ignored_things.IgnoredClassChild.test_meh,
 ]
+
+
+@pytest.fixture()
+def lineage():
+    return Lineage()
 
 
 def ignored_things_with_attribute(**kwargs):
@@ -68,81 +71,72 @@ def ignored_things_with_attribute(**kwargs):
 
 
 describe "Determining ignored":
-    before_each:
-        self.lineage = Lineage()
+    it "is ignored if set to ignored", lineage:
+        assert lineage.ignored(ignored_things.test_ignored)
+        assert not lineage.ignored(ignored_things.test_not_ignored)
 
-    it "is ignored if set to ignored":
-        assert self.lineage.ignored(ignored_things.test_ignored)
-        assert not self.lineage.ignored(ignored_things.test_not_ignored)
-
-    it "is ignored if parent is set to ignored":
+    it "is ignored if parent is set to ignored", lineage:
         for thing in some_ignored_things:
-            assert self.lineage.ignored(thing)
+            assert lineage.ignored(thing)
 
 describe "Determining focus all":
-    before_each:
-        self.lineage = Lineage()
-
-    it "is not set to focused_all if anything in lineage is ignored":
+    it "is not set to focused_all if anything in lineage is ignored", lineage:
         for thing in ignored_things_with_attribute(nose_focus_all=True):
-            assert not self.lineage.focused_all(thing)
+            assert not lineage.focused_all(thing)
 
-    it "is set to focused if it has focus_all set":
-        assert self.lineage.focused_all(focus_all_module)
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayer)
-        assert self.lineage.focused_all(focus_things.test_focus_all_function)
+    it "is set to focused if it has focus_all set", lineage:
+        assert lineage.focused_all(focus_all_module)
+        assert lineage.focused_all(focus_things.TestFocusManyLayer)
+        assert lineage.focused_all(focus_things.test_focus_all_function)
 
-    it "is not necessarily set if just focus is set":
-        assert not self.lineage.focused_all(focus_things.TestFocusOneLayer)
-        assert not self.lineage.focused_all(focus_things.test_focused_function)
+    it "is not necessarily set if just focus is set", lineage:
+        assert not lineage.focused_all(focus_things.TestFocusOneLayer)
+        assert not lineage.focused_all(focus_things.test_focused_function)
 
-    it "is not set if the parent is ignored":
-        assert not self.lineage.focused_all(
+    it "is not set if the parent is ignored", lineage:
+        assert not lineage.focused_all(
             implicitly_ignored_module_stuff.TestWithFocusAllButIgnoredModule
         )
 
-    it "is set if any parent has it set":
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayer)
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayer.test_a_test)
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayerChild)
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayerChild.test_b_test)
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayerGrandChild)
-        assert self.lineage.focused_all(focus_things.TestFocusManyLayerGrandChild.test_c_test)
+    it "is set if any parent has it set", lineage:
+        assert lineage.focused_all(focus_things.TestFocusManyLayer)
+        assert lineage.focused_all(focus_things.TestFocusManyLayer.test_a_test)
+        assert lineage.focused_all(focus_things.TestFocusManyLayerChild)
+        assert lineage.focused_all(focus_things.TestFocusManyLayerChild.test_b_test)
+        assert lineage.focused_all(focus_things.TestFocusManyLayerGrandChild)
+        assert lineage.focused_all(focus_things.TestFocusManyLayerGrandChild.test_c_test)
 
-        assert self.lineage.focused_all(focus_all_module.test_focus_function)
-        assert self.lineage.focused_all(focus_all_module.TestFocusClass)
-        assert self.lineage.focused_all(focus_all_module.TestFocusClass.test_blah)
+        assert lineage.focused_all(focus_all_module.test_focus_function)
+        assert lineage.focused_all(focus_all_module.TestFocusClass)
+        assert lineage.focused_all(focus_all_module.TestFocusClass.test_blah)
 
 describe "Determining focus":
-    before_each:
-        self.lineage = Lineage()
-
-    it "is not set to focused if anything in lineage is ignored":
+    it "is not set to focused if anything in lineage is ignored", lineage:
         for thing in ignored_things_with_attribute(nose_focus=True):
-            assert not self.lineage.focused(thing)
+            assert not lineage.focused(thing)
 
-    it "is set to focused if it has focus set":
-        assert self.lineage.focused(focus_module)
-        assert self.lineage.focused(focus_things.TestFocusOneLayer)
-        assert self.lineage.focused(focus_things.test_focused_function)
+    it "is set to focused if it has focus set", lineage:
+        assert lineage.focused(focus_module)
+        assert lineage.focused(focus_things.TestFocusOneLayer)
+        assert lineage.focused(focus_things.test_focused_function)
 
-    it "is set to focused if anything has focus_all":
-        assert self.lineage.focused(focus_things.TestFocusManyLayer)
-        assert self.lineage.focused(focus_things.TestFocusManyLayer.test_a_test)
-        assert self.lineage.focused(focus_things.TestFocusManyLayerChild)
-        assert self.lineage.focused(focus_things.TestFocusManyLayerChild.test_b_test)
-        assert self.lineage.focused(focus_things.TestFocusManyLayerGrandChild)
-        assert self.lineage.focused(focus_things.TestFocusManyLayerGrandChild.test_c_test)
+    it "is set to focused if anything has focus_all", lineage:
+        assert lineage.focused(focus_things.TestFocusManyLayer)
+        assert lineage.focused(focus_things.TestFocusManyLayer.test_a_test)
+        assert lineage.focused(focus_things.TestFocusManyLayerChild)
+        assert lineage.focused(focus_things.TestFocusManyLayerChild.test_b_test)
+        assert lineage.focused(focus_things.TestFocusManyLayerGrandChild)
+        assert lineage.focused(focus_things.TestFocusManyLayerGrandChild.test_c_test)
 
-        assert self.lineage.focused(focus_all_module.test_focus_function)
-        assert self.lineage.focused(focus_all_module.TestFocusClass)
-        assert self.lineage.focused(focus_all_module.TestFocusClass.test_blah)
+        assert lineage.focused(focus_all_module.test_focus_function)
+        assert lineage.focused(focus_all_module.TestFocusClass)
+        assert lineage.focused(focus_all_module.TestFocusClass.test_blah)
 
-    it "is set to focused if one parent has focus":
-        assert self.lineage.focused(focus_module.TestFocusClass)
-        assert self.lineage.focused(focus_module.test_focus_function)
-        assert self.lineage.focused(focus_things.TestFocusOneLayer.test_a_test)
+    it "is set to focused if one parent has focus", lineage:
+        assert lineage.focused(focus_module.TestFocusClass)
+        assert lineage.focused(focus_module.test_focus_function)
+        assert lineage.focused(focus_things.TestFocusOneLayer.test_a_test)
 
-    it "is not set to focused just because parent class is focused":
-        assert not self.lineage.focused(non_focus_module.TestFocusClassChild)
-        assert not self.lineage.focused(non_focus_module.TestFocusClassChild.test_stuff)
+    it "is not set to focused just because parent class is focused", lineage:
+        assert not lineage.focused(non_focus_module.TestFocusClassChild)
+        assert not lineage.focused(non_focus_module.TestFocusClassChild.test_stuff)

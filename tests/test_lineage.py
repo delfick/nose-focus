@@ -1,88 +1,101 @@
 # coding: spec
 
-from noseOfYeti.tokeniser.support import noy_sup_setUp
 from nose_focus.plugin import Lineage
-from unittest import TestCase
+import noseOfYeti.tokeniser.support
 import noseOfYeti
+import pytest
 import nose
 
+from tests.examples import lineage as lg, lineage2 as lg2
 from tests import examples
 import tests
 
-from tests.examples import lineage, lineage2
 
-describe TestCase, "Finding lineage":
-    before_each:
-        self.lineage = Lineage()
+@pytest.fixture()
+def lineage():
+    return Lineage()
 
+
+describe "Finding lineage":
     describe "For a built in":
-        it "Finds no lineage":
-            self.assertEqual(self.lineage.determine(len), [])
-            self.assertEqual(self.lineage.determine(locals), [])
+        it "Finds no lineage", lineage:
+            assert lineage.determine(len) == []
+            assert lineage.determine(locals) == []
 
     describe "For a module":
-        it "Finds parent modules":
-            self.assertEqual(self.lineage.determine(examples), [tests])
-            self.assertEqual(
-                self.lineage.determine(noseOfYeti.tokeniser.support),
-                [noseOfYeti.tokeniser, noseOfYeti],
-            )
+        it "Finds parent modules", lineage:
+            assert lineage.determine(examples) == [tests]
+            assert lineage.determine(noseOfYeti.tokeniser.support) == [
+                noseOfYeti.tokeniser,
+                noseOfYeti,
+            ]
 
     describe "For a class":
-        it "Ignores object as a parent":
-            self.assertEqual(
-                self.lineage.determine(lineage.AClass),
-                [tests.examples.lineage, tests.examples, tests],
-            )
+        it "Ignores object as a parent", lineage:
+            assert lineage.determine(lg.AClass) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+            ]
 
-        it "Finds parent classes and modules":
-            self.assertEqual(
-                self.lineage.determine(lineage.ASubClass),
-                [tests.examples.lineage, tests.examples, tests, lineage.AClass],
-            )
-            self.assertEqual(
-                self.lineage.determine(lineage.AGrandChildClass),
-                [tests.examples.lineage, tests.examples, tests, lineage.ASubClass, lineage.AClass],
-            )
+        it "Finds parent classes and modules", lineage:
+            assert lineage.determine(lg.ASubClass) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+                lg.AClass,
+            ]
+            assert lineage.determine(lg.AGrandChildClass) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+                lg.ASubClass,
+                lg.AClass,
+            ]
 
-        it "Finds Mixins":
-            self.assertEqual(
-                self.lineage.determine(lineage.AClassWithMixin),
-                [tests.examples.lineage, tests.examples, tests, lineage.AMixin],
-            )
-            self.assertEqual(
-                self.lineage.determine(lineage.AClassWithSubMixin),
-                [tests.examples.lineage, tests.examples, tests, lineage.ASubMixin, lineage.AMixin],
-            )
-            self.assertEqual(
-                self.lineage.determine(lineage.AClassWithMultipleMixins),
-                [
-                    tests.examples.lineage,
-                    tests.examples,
-                    tests,
-                    lineage.ASubMixin,
-                    lineage.AMixin,
-                    lineage.BMixin,
-                ],
-            )
+        it "Finds Mixins", lineage:
+            assert lineage.determine(lg.AClassWithMixin) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+                lg.AMixin,
+            ]
+            assert lineage.determine(lg.AClassWithSubMixin) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+                lg.ASubMixin,
+                lg.AMixin,
+            ]
+            assert lineage.determine(lg.AClassWithMultipleMixins) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+                lg.ASubMixin,
+                lg.AMixin,
+                lg.BMixin,
+            ]
 
-        it "Finds parent classes with embedded classes if they have __embedded_class_parent__":
-            self.assertEqual(
-                self.lineage.determine(lineage.AClassWithEmbeddedClass.EmbeddedClass),
-                [tests.examples.lineage, tests.examples, tests, lineage.AClassWithEmbeddedClass],
-            )
+        it "Finds parent classes with embedded classes if they have __embedded_class_parent__", lineage:
+            assert lineage.determine(lg.AClassWithEmbeddedClass.EmbeddedClass) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+                lg.AClassWithEmbeddedClass,
+            ]
 
     describe "For a function":
-        it "Finds the modules":
-            self.assertEqual(
-                self.lineage.determine(lineage.aFunction),
-                [tests.examples.lineage, tests.examples, tests],
-            )
+        it "Finds the modules", lineage:
+            assert lineage.determine(lg.aFunction) == [
+                tests.examples.lineage,
+                tests.examples,
+                tests,
+            ]
 
     describe "methods":
 
         def assert_finds(
-            self, klses, methods, looking_for, instance_only=False, definition_only=False
+            self, lineage, klses, methods, looking_for, instance_only=False, definition_only=False
         ):
             """Assert that the methods on both the kls definition and kls instance finds the lineage we are looking for"""
             if not isinstance(klses, list) and not isinstance(klses, tuple):
@@ -99,294 +112,290 @@ describe TestCase, "Finding lineage":
             for method in methods:
                 for kls in klses:
                     if not instance_only:
-                        result = self.lineage.determine(getattr(kls, method))
+                        result = lineage.determine(getattr(kls, method))
                         if result != looking_for:
                             print("Determining {1} on {0} definition".format(kls, method))
                             print(result)
                             print("---")
                             print(looking_for)
-                        self.assertEqual(result, looking_for)
+                        assert result == looking_for
 
                     if not definition_only:
-                        result = self.lineage.determine(getattr(kls(), method))
+                        result = lineage.determine(getattr(kls(), method))
                         if result != looking_for:
                             print("Determining {1} on {0} instance".format(kls, method))
                             print(result)
                             print("---")
                             print(looking_for)
-                        self.assertEqual(result, looking_for)
+                        assert result == looking_for
 
-        it "Finds parent classes and modules":
+        it "Finds parent classes and modules", lineage:
             self.assert_finds(
-                lineage.AClass,
+                lineage,
+                lg.AClass,
                 ["onlyAClass", "aMethod"],
-                [lineage.AClass, tests.examples.lineage, tests.examples, tests],
+                [lg.AClass, tests.examples.lineage, tests.examples, tests],
             )
 
         describe "Inheritance":
-            it "Finds the class the method is defined on":
+            it "Finds the class the method is defined on", lineage:
                 klses = [
-                    lineage.AMixin,
-                    lineage.ASubMixin,
-                    lineage.AClassWithMixin,
-                    lineage.AClassWithSubMixin,
-                    lineage2.BClassWithASubMixin,
-                    lineage.AClassWithMixinOverride,
-                    lineage.AClassWithSubMixinOverride,
-                    lineage2.BClassWithASubMixinOverride,
-                    lineage2.BClassWithASubMixinOverride,
-                    lineage.AClassWithMultipleMixins,
+                    lg.AMixin,
+                    lg.ASubMixin,
+                    lg.AClassWithMixin,
+                    lg.AClassWithSubMixin,
+                    lg2.BClassWithASubMixin,
+                    lg.AClassWithMixinOverride,
+                    lg.AClassWithSubMixinOverride,
+                    lg2.BClassWithASubMixinOverride,
+                    lg2.BClassWithASubMixinOverride,
+                    lg.AClassWithMultipleMixins,
                 ]
                 self.assert_finds(
+                    lineage,
                     klses,
                     ["onlyAMixin"],
-                    [lineage.AMixin, tests.examples.lineage, tests.examples, tests],
+                    [lg.AMixin, tests.examples.lineage, tests.examples, tests],
                 )
 
                 klses = [
-                    lineage.ASubMixin,
-                    lineage.AClassWithSubMixin,
-                    lineage2.BClassWithASubMixin,
-                    lineage.AClassWithSubMixinOverride,
-                    lineage2.BClassWithASubMixinOverride,
-                    lineage.AClassWithMultipleMixins,
+                    lg.ASubMixin,
+                    lg.AClassWithSubMixin,
+                    lg2.BClassWithASubMixin,
+                    lg.AClassWithSubMixinOverride,
+                    lg2.BClassWithASubMixinOverride,
+                    lg.AClassWithMultipleMixins,
                 ]
                 self.assert_finds(
+                    lineage,
                     klses,
                     ["onlyASubMixin"],
-                    [
-                        lineage.ASubMixin,
-                        tests.examples.lineage,
-                        tests.examples,
-                        tests,
-                        lineage.AMixin,
-                    ],
+                    [lg.ASubMixin, tests.examples.lineage, tests.examples, tests, lg.AMixin,],
                 )
 
                 klses = [
-                    lineage.AClass,
-                    lineage.ASubClass,
-                    lineage.ASubClassOverride,
-                    lineage.AGrandChildClass,
-                    lineage.AGrandChildClassOverride,
-                    lineage2.BSubClass,
-                    lineage2.BSubClassOverride,
-                    lineage2.BGrandChildClass,
-                    lineage2.BGrandChildClassOverride,
+                    lg.AClass,
+                    lg.ASubClass,
+                    lg.ASubClassOverride,
+                    lg.AGrandChildClass,
+                    lg.AGrandChildClassOverride,
+                    lg2.BSubClass,
+                    lg2.BSubClassOverride,
+                    lg2.BGrandChildClass,
+                    lg2.BGrandChildClassOverride,
                 ]
                 self.assert_finds(
+                    lineage,
                     klses,
                     ["onlyAClass"],
-                    [lineage.AClass, tests.examples.lineage, tests.examples, tests],
+                    [lg.AClass, tests.examples.lineage, tests.examples, tests],
                 )
 
                 klses = [
-                    lineage.ASubClass,
-                    lineage.AGrandChildClass,
-                    lineage.AGrandChildClassOverride,
+                    lg.ASubClass,
+                    lg.AGrandChildClass,
+                    lg.AGrandChildClassOverride,
                 ]
                 self.assert_finds(
+                    lineage,
                     klses,
                     ["onlyASubClass"],
-                    [
-                        lineage.ASubClass,
-                        tests.examples.lineage,
-                        tests.examples,
-                        tests,
-                        lineage.AClass,
-                    ],
+                    [lg.ASubClass, tests.examples.lineage, tests.examples, tests, lg.AClass,],
                 )
 
                 klses = [
-                    lineage2.BSubClass,
-                    lineage2.BGrandChildClass,
-                    lineage2.BGrandChildClassOverride,
+                    lg2.BSubClass,
+                    lg2.BGrandChildClass,
+                    lg2.BGrandChildClassOverride,
                 ]
                 self.assert_finds(
+                    lineage,
                     klses,
                     ["onlyBSubClass"],
                     [
-                        lineage2.BSubClass,
+                        lg2.BSubClass,
                         tests.examples.lineage2,
                         tests.examples,
                         tests,
-                        lineage.AClass,
+                        lg.AClass,
                         tests.examples.lineage,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage.AGrandChildClass,
+                    lineage,
+                    lg.AGrandChildClass,
                     ["onlyAGrandChildClass"],
                     [
-                        lineage.AGrandChildClass,
+                        lg.AGrandChildClass,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.ASubClass,
-                        lineage.AClass,
+                        lg.ASubClass,
+                        lg.AClass,
                     ],
                 )
 
-            it "finds mixins from the method if the method is defined on the class we are getting it from":
+            it "finds mixins from the method if the method is defined on the class we are getting it from", lineage:
                 self.assert_finds(
-                    lineage.AMixin,
+                    lineage,
+                    lg.AMixin,
                     ["onlyAMixin"],
-                    [lineage.AMixin, tests.examples.lineage, tests.examples, tests],
+                    [lg.AMixin, tests.examples.lineage, tests.examples, tests],
                 )
 
                 self.assert_finds(
-                    lineage.ASubMixin,
+                    lineage,
+                    lg.ASubMixin,
                     ["onlyASubMixin"],
-                    [
-                        lineage.ASubMixin,
-                        tests.examples.lineage,
-                        tests.examples,
-                        tests,
-                        lineage.AMixin,
-                    ],
+                    [lg.ASubMixin, tests.examples.lineage, tests.examples, tests, lg.AMixin,],
                 )
 
                 self.assert_finds(
-                    lineage.AClassWithMixin,
+                    lineage,
+                    lg.AClassWithMixin,
                     ["onlyAClassWithMixin"],
-                    [
-                        lineage.AClassWithMixin,
-                        tests.examples.lineage,
-                        tests.examples,
-                        tests,
-                        lineage.AMixin,
-                    ],
+                    [lg.AClassWithMixin, tests.examples.lineage, tests.examples, tests, lg.AMixin,],
                 )
 
                 self.assert_finds(
-                    lineage.AClassWithSubMixin,
+                    lineage,
+                    lg.AClassWithSubMixin,
                     ["onlyAClassWithSubMixin"],
                     [
-                        lineage.AClassWithSubMixin,
+                        lg.AClassWithSubMixin,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.ASubMixin,
-                        lineage.AMixin,
+                        lg.ASubMixin,
+                        lg.AMixin,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage2.BClassWithASubMixin,
+                    lineage,
+                    lg2.BClassWithASubMixin,
                     ["onlyBClassWithASubMixin"],
                     [
-                        lineage2.BClassWithASubMixin,
+                        lg2.BClassWithASubMixin,
                         tests.examples.lineage2,
                         tests.examples,
                         tests,
-                        lineage.ASubMixin,
+                        lg.ASubMixin,
                         tests.examples.lineage,
-                        lineage.AMixin,
+                        lg.AMixin,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage.ASubClassOverride,
+                    lineage,
+                    lg.ASubClassOverride,
                     ["aMethod", "onlyASubClassOverride"],
                     [
-                        lineage.ASubClassOverride,
+                        lg.ASubClassOverride,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.AClass,
+                        lg.AClass,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage.AGrandChildClassOverride,
+                    lineage,
+                    lg.AGrandChildClassOverride,
                     ["aMethod", "onlyAGrandChildClassOverride"],
                     [
-                        lineage.AGrandChildClassOverride,
+                        lg.AGrandChildClassOverride,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.ASubClass,
-                        lineage.AClass,
+                        lg.ASubClass,
+                        lg.AClass,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage2.BSubClassOverride,
+                    lineage,
+                    lg2.BSubClassOverride,
                     ["aMethod", "onlyBSubClassOverride"],
                     [
-                        lineage2.BSubClassOverride,
+                        lg2.BSubClassOverride,
                         tests.examples.lineage2,
                         tests.examples,
                         tests,
-                        lineage.AClass,
+                        lg.AClass,
                         tests.examples.lineage,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage2.BGrandChildClassOverride,
+                    lineage,
+                    lg2.BGrandChildClassOverride,
                     ["aMethod", "onlyBGrandChildClassOverride"],
                     [
-                        lineage2.BGrandChildClassOverride,
+                        lg2.BGrandChildClassOverride,
                         tests.examples.lineage2,
                         tests.examples,
                         tests,
-                        lineage2.BSubClass,
-                        lineage.AClass,
+                        lg2.BSubClass,
+                        lg.AClass,
                         tests.examples.lineage,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage.AClassWithMixinOverride,
+                    lineage,
+                    lg.AClassWithMixinOverride,
                     ["aMethod", "onlyAClassWithMixinOverride"],
                     [
-                        lineage.AClassWithMixinOverride,
+                        lg.AClassWithMixinOverride,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.AMixin,
+                        lg.AMixin,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage.AClassWithSubMixinOverride,
+                    lineage,
+                    lg.AClassWithSubMixinOverride,
                     ["aMethod", "onlyAClassWithSubMixinOverride"],
                     [
-                        lineage.AClassWithSubMixinOverride,
+                        lg.AClassWithSubMixinOverride,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.ASubMixin,
-                        lineage.AMixin,
+                        lg.ASubMixin,
+                        lg.AMixin,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage2.BClassWithASubMixinOverride,
+                    lineage,
+                    lg2.BClassWithASubMixinOverride,
                     ["aMethod", "onlyBClassWithASubMixinOverride"],
                     [
-                        lineage2.BClassWithASubMixinOverride,
+                        lg2.BClassWithASubMixinOverride,
                         tests.examples.lineage2,
                         tests.examples,
                         tests,
-                        lineage.ASubMixin,
+                        lg.ASubMixin,
                         tests.examples.lineage,
-                        lineage.AMixin,
+                        lg.AMixin,
                     ],
                 )
 
                 self.assert_finds(
-                    lineage.AClassWithMultipleMixins,
+                    lineage,
+                    lg.AClassWithMultipleMixins,
                     ["onlyAClassWithMultipleMixins"],
                     [
-                        lineage.AClassWithMultipleMixins,
+                        lg.AClassWithMultipleMixins,
                         tests.examples.lineage,
                         tests.examples,
                         tests,
-                        lineage.ASubMixin,
-                        lineage.AMixin,
-                        lineage.BMixin,
+                        lg.ASubMixin,
+                        lg.AMixin,
+                        lg.BMixin,
                     ],
                 )

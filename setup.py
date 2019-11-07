@@ -14,8 +14,8 @@ setup(
     , extras_require =
       { "tests":
         [ "nose"
-        , "noseOfYeti"
-        , "nose-pattern-exclude>=0.1.3"
+        , "pytest==5.2.2"
+        , "noseOfYeti==1.9.1"
         ]
       }
 

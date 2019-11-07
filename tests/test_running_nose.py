@@ -1,7 +1,5 @@
 # coding: spec
 
-from unittest import TestCase
-
 import subprocess
 import shutil
 import shlex
@@ -20,7 +18,7 @@ regexes = {
     )
 }
 
-describe TestCase, "Running nose":
+describe "Running nose":
 
     def run_nose(self, other_args=""):
         """
@@ -76,7 +74,7 @@ describe TestCase, "Running nose":
             print("Expected:")
             print("\n".join(expected))
             print("=" * 80)
-        self.assertEqual(result, expected)
+        assert result == expected
 
     it "runs all the tests when run without nose_focus":
         expected = [
