@@ -30,6 +30,7 @@ setup(
     , author = "Stephen Moore"
     , author_email = "stephen@delfick.com"
     , description = "Decorator and plugin to make nose focus on specific tests"
+    , long_description = open("README.rst").read()
     , license = "MIT"
     , keywords = "nose tests focus"
     )

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Helper for searching code base
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+(
+    cd $DIR
+    exec ack "$@" nose_focus tests
+)
