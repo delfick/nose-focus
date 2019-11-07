@@ -10,6 +10,12 @@ run the tests that you are focusing on right now.
 Changelog
 ---------
 
+0.2.0
+   * No longer support python2, which also means this module now has no
+     dependencies
+   * code is formatted with black
+   * nose_focus tests are now written using pytest
+
 0.1.4
    * When you focus a class, tests using that class outside that module will also
      be focused
