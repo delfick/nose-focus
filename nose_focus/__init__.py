@@ -1,3 +1,5 @@
+VERSION = "0.1.4"
+
 def focus(thing):
     """Set the nose_focus attribute on something"""
     thing.nose_focus = True
@@ -12,4 +14,3 @@ def focus_ignore(thing):
     """Set the nose_focus_ignore attribute on something"""
     thing.nose_focus_ignore = True
     return thing
-

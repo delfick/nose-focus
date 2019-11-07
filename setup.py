@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
+from nose_focus import VERSION
 
 setup(
       name = "nose_focus"
-    , version = "0.1.4"
+    , version = VERSION
     , packages = find_packages(include='nose_focus.*', exclude=["tests*"])
     , include_package_data = True
 
