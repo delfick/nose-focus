@@ -5,8 +5,12 @@ from nose_focus.plugin import Lineage
 from noseOfYeti.tokeniser.support import noy_sup_setUp
 from unittest import TestCase
 
-from tests.examples.test_examples.test_ignored_module.test_implicitly_ignored_module import test_stuff as implicitly_ignored_module_stuff
-from tests.examples.test_examples.test_ignored_module import test_implicitly_ignored_module as implicitly_ignored_module
+from tests.examples.test_examples.test_ignored_module.test_implicitly_ignored_module import (
+    test_stuff as implicitly_ignored_module_stuff,
+)
+from tests.examples.test_examples.test_ignored_module import (
+    test_implicitly_ignored_module as implicitly_ignored_module,
+)
 
 from tests.examples.test_examples.test_ignored_module import test_things as ignored_module_things
 from tests.examples.test_examples import test_ignored_module as ignored_module
@@ -22,14 +26,21 @@ from tests.examples.test_examples.test_module import test_non_focus_module as no
 import types
 
 some_ignored_things = [
-      implicitly_ignored_module, implicitly_ignored_module_stuff
-    , implicitly_ignored_module_stuff.test_things, implicitly_ignored_module_stuff.TestStuff, implicitly_ignored_module_stuff.TestStuff.test_other
+    implicitly_ignored_module,
+    implicitly_ignored_module_stuff,
+    implicitly_ignored_module_stuff.test_things,
+    implicitly_ignored_module_stuff.TestStuff,
+    implicitly_ignored_module_stuff.TestStuff.test_other,
+    ignored_module,
+    ignored_module_things,
+    ignored_module_things.test_things,
+    ignored_module_things.TestStuff,
+    ignored_module_things.TestStuff.test_other,
+    ignored_things.IgnoredClass.test_blah,
+    ignored_things.IgnoredClassChild,
+    ignored_things.IgnoredClassChild.test_meh,
+]
 
-    , ignored_module, ignored_module_things
-    , ignored_module_things.test_things, ignored_module_things.TestStuff, ignored_module_things.TestStuff.test_other
-
-    , ignored_things.IgnoredClass.test_blah, ignored_things.IgnoredClassChild, ignored_things.IgnoredClassChild.test_meh
-    ]
 
 def ignored_things_with_attribute(**kwargs):
     """
@@ -37,7 +48,7 @@ def ignored_things_with_attribute(**kwargs):
 
     The butterfly that this function looks like is brought to you by python3's lack of unbound methods
     """
-    Empty = type("Empty", (object, ), {})
+    Empty = type("Empty", (object,), {})
     for thing in some_ignored_things:
         current_vals = dict((key, getattr(thing, key, Empty)) for key in kwargs)
         try:
@@ -45,13 +56,16 @@ def ignored_things_with_attribute(**kwargs):
                 setattr(thing, key, val)
             yield thing
         except AttributeError as err:
-            raise Exception("Couldn't set {0} on {1} to {2} because {3}".format(key, thing, val, err))
+            raise Exception(
+                "Couldn't set {0} on {1} to {2} because {3}".format(key, thing, val, err)
+            )
         finally:
             for key, val in current_vals.items():
                 if val is Empty:
                     delattr(thing, key)
                 else:
                     setattr(thing, key, val)
+
 
 describe "Determining ignored":
     before_each:
@@ -83,7 +97,9 @@ describe "Determining focus all":
         assert not self.lineage.focused_all(focus_things.test_focused_function)
 
     it "is not set if the parent is ignored":
-        assert not self.lineage.focused_all(implicitly_ignored_module_stuff.TestWithFocusAllButIgnoredModule)
+        assert not self.lineage.focused_all(
+            implicitly_ignored_module_stuff.TestWithFocusAllButIgnoredModule
+        )
 
     it "is set if any parent has it set":
         assert self.lineage.focused_all(focus_things.TestFocusManyLayer)
@@ -130,4 +146,3 @@ describe "Determining focus":
     it "is not set to focused just because parent class is focused":
         assert not self.lineage.focused(non_focus_module.TestFocusClassChild)
         assert not self.lineage.focused(non_focus_module.TestFocusClassChild.test_stuff)
-

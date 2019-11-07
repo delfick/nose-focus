@@ -10,8 +10,10 @@ import nose
 import sys
 import os
 
+
 class Lineage(object):
     """Knows how to get the lineage of things"""
+
     def __init__(self):
         self.lineage = {}
         self._ignored = {}
@@ -27,6 +29,7 @@ class Lineage(object):
 
         if repr(thing) not in self.lineage:
             lineage = []
+
             def add(thing):
                 """Add something and it's lineage to lineage"""
                 if thing not in lineage:
@@ -41,17 +44,22 @@ class Lineage(object):
             elif type(thing) is types.ModuleType:
                 name = thing.__name__
                 if name.count(".") > 0:
-                    parent = '.'.join(name.split('.')[:-1])
+                    parent = ".".join(name.split(".")[:-1])
                     if parent in sys.modules:
                         add(sys.modules[parent])
 
             else:
-                is_method = type(thing) is types.FunctionType and getattr(thing, "__qualname__", "").count(".") > 0
+                is_method = (
+                    type(thing) is types.FunctionType
+                    and getattr(thing, "__qualname__", "").count(".") > 0
+                )
                 if is_method or type(thing) in (unbound_method_type, types.MethodType):
                     parent = None
                     if is_method:
                         # Damn you python3 and your inability to know if a Function comes from a class
-                        parent = getattr(sys.modules[thing.__module__], thing.__qualname__.split(".")[0])
+                        parent = getattr(
+                            sys.modules[thing.__module__], thing.__qualname__.split(".")[0]
+                        )
                     if hasattr(thing, "im_class"):
                         parent = thing.im_class
                     elif hasattr(thing, "__self__"):
@@ -105,7 +113,9 @@ class Lineage(object):
         if thing not in self._ignored:
             ignored = False
             lineage = self.determine(thing)
-            if getattr(thing, "nose_focus_ignore", None) or (lineage and any(self.ignored(kls) for kls in lineage)):
+            if getattr(thing, "nose_focus_ignore", None) or (
+                lineage and any(self.ignored(kls) for kls in lineage)
+            ):
                 ignored = True
 
             self._ignored[thing] = ignored
@@ -117,7 +127,9 @@ class Lineage(object):
             focused_all = False
             lineage = self.determine(thing)
             if not self.ignored(thing):
-                if getattr(thing, "nose_focus_all", None) or (lineage and any(self.focused_all(kls) for kls in lineage)):
+                if getattr(thing, "nose_focus_all", None) or (
+                    lineage and any(self.focused_all(kls) for kls in lineage)
+                ):
                     focused_all = True
             self._focused_all[thing] = focused_all
         return self._focused_all[thing]
@@ -138,10 +150,15 @@ class Lineage(object):
                     is_class = isinstance(thing, type)
                     is_not_class = not is_class
                     parent_is_not_class = not parent or not isinstance(parent, type)
-                    if getattr(thing, "nose_focus", None) or (((is_class and parent_is_not_class) or is_not_class) and parent and self.focused(parent)):
+                    if getattr(thing, "nose_focus", None) or (
+                        ((is_class and parent_is_not_class) or is_not_class)
+                        and parent
+                        and self.focused(parent)
+                    ):
                         focused = True
             self._focused[thing] = focused
         return self._focused[thing]
+
 
 class Plugin(Plugin):
     name = "nose_focus"
@@ -187,33 +204,35 @@ class Plugin(Plugin):
     def options(self, parser, env={}):
         super(Plugin, self).options(parser, env)
 
-        parser.add_option('--with-focus'
-            , help    = 'Enable nose_focus'
-            , action  = 'store_true'
-            , dest    = 'only_focus'
-            , default = False
-            )
+        parser.add_option(
+            "--with-focus",
+            help="Enable nose_focus",
+            action="store_true",
+            dest="only_focus",
+            default=False,
+        )
 
-        parser.add_option('--without-ignored'
-            , help    = 'Run all tests except those that are ignored'
-            , action  = 'store_true'
-            , dest    = 'just_ignore'
-            , default = False
-            )
+        parser.add_option(
+            "--without-ignored",
+            help="Run all tests except those that are ignored",
+            action="store_true",
+            dest="just_ignore",
+            default=False,
+        )
 
-        parser.add_option("--only-include-filename"
-            , help   = 'Glob of filenames to include'
-            , action = "append"
-            )
+        parser.add_option(
+            "--only-include-filename", help="Glob of filenames to include", action="append"
+        )
 
     def configure(self, options, conf):
         super(Plugin, self).configure(options, conf)
         if options.only_focus and options.just_ignore:
-            raise optparse.OptionError("Please specify only one --with-focus or --without-ignored", "--with-focus")
+            raise optparse.OptionError(
+                "Please specify only one --with-focus or --without-ignored", "--with-focus"
+            )
         self.enabled = options.only_focus or options.just_ignore or options.only_include_filename
         self.lineage.selector = Selector(conf)
         self.only_focus = options.only_focus
         self.just_ignore = options.just_ignore
         self.only_include_filename = options.only_include_filename
-        self.logger = logging.getLogger('{0}.{1}'.format(__name__, type(self).__name__))
-
+        self.logger = logging.getLogger("{0}.{1}".format(__name__, type(self).__name__))
