@@ -25,8 +25,6 @@ class Lineage(object):
         Get all the classes in the lineage of this method
         Memoize the results for each method and class as we go along
         """
-        unbound_method_type = types.MethodType
-
         if repr(thing) not in self.lineage:
             lineage = []
 
@@ -38,10 +36,10 @@ class Lineage(object):
                         if determined not in lineage:
                             lineage.append(determined)
 
-            if type(thing) in (types.BuiltinMethodType, types.BuiltinFunctionType):
+            if isinstance(thing, (types.BuiltinMethodType, types.BuiltinFunctionType)):
                 pass
 
-            elif type(thing) is types.ModuleType:
+            elif isinstance(thing, types.ModuleType):
                 name = thing.__name__
                 if name.count(".") > 0:
                     parent = ".".join(name.split(".")[:-1])
@@ -50,10 +48,10 @@ class Lineage(object):
 
             else:
                 is_method = (
-                    type(thing) is types.FunctionType
+                    isinstance(thing, types.FunctionType)
                     and getattr(thing, "__qualname__", "").count(".") > 0
                 )
-                if is_method or type(thing) in (unbound_method_type, types.MethodType):
+                if is_method or isinstance(thing, types.MethodType):
                     parent = None
                     if is_method:
                         # Damn you python3 and your inability to know if a Function comes from a class
@@ -80,7 +78,7 @@ class Lineage(object):
                     if module and module is not builtins:
                         add(module)
 
-                    if type(thing) is not types.FunctionType:
+                    if not isinstance(thing, types.FunctionType):
                         klses = self.getmro(thing)
 
                         for kls in klses:
@@ -177,7 +175,7 @@ class Plugin(Plugin):
         if not self.enabled or (not self.only_focus and not self.just_ignore):
             return
 
-        if type(thing) is nose.pyversion.UnboundMethod:
+        if isinstance(thing, nose.pyversion.UnboundMethod):
             thing = thing._func
 
         if self.lineage.unmatched(thing) is False:
